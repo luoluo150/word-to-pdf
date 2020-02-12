@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta http-equiv="Content-Type" content="Application/msword">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+	<link rel="stylesheet" href="css/index.css">
+	<link rel="stylesheet" href="css/pdfh5.css"/>
+    <title>电子合同</title>
+</head>
+<body >
+         <p class="calenew"></p>
+    	<div id="pdfContainer" class="container" style="background-color:#fff">    
+			<!-- <div  id="demo"></div> -->
+			 
+			 <div class="dataTables_wrapper" style="-webkit-overflow-scrolling:touch;overflow:auto!important;height: 75vh;margin-top: 5vh;">
+			   <iframe src='' width='100%' style="min-height:73vh;" frameborder="0" scrolling='no'></iframe>
+		</div>
+			<div class="btndiv">
+			  		<input type="checkbox" class="checked"  onclick="Getchecked(this)">
+			        <span >我已仔细阅读合约,同意上述全部内容</span>
+					<button id="tocanvas" disabled onclick="getcanvas()">点击签名</button>
+			</div>
+			<div id="copytext" >
+			   <img class="closebtn" src="image/close.png " width="20" height="20" onclick="closediv(1)"> 
+			   <p id="tishikuai">
+				   <a id="information2" target="_Blank">合同已生成,点击此处跳转</a>
+			   </p>
+			   <span style="  position: absolute; top: 85px; width: 500px; left: -90px; font-size: 15px;">苹果系统请下载Apple Books阅读软件</span>
+			</div>
+		</div>
+
+<script src="js/jquery-1.11.0.min.js"></script>
+ <script type="text/javascript">
+   
+	var puburl="http://*********/";
+    var uid=0;
+	//var oid="";
+	var comid="";
+	var ctid="";
+
+	window.onload=function(){ 
+		//oid=GetRequest().openid;
+		//getCode();
+	    getOpenId(1234);
+	}
+	function  getCode () { //获取code
+		const AppId='**************';  //公众号appid
+		const code=getUrlparam('code'); //调用方法截取url中的code
+		const local = window.location.href; //设置回调页面还是当前页
+				  if(code==null ||code=== ''){
+						window.location.href="https://open.weixin.qq.com/connect/oauth2/authorize?appid="+AppId+"&redirect_uri="+encodeURIComponent(local)+'&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect';	
+				  }else{
+						//alert(code);
+						getOpenId(code);
+				  }
+	}
+	function getOpenId (code) { // 通过code获取 openId等用户信息  
+		//alert(code);
+			$.ajax({
+						type: "get",
+						url: puburl+"/sys/weChat/userSign", 
+						data:{"code":code},
+						success: function(data) {
+							//console.log(data);
+							// alert(data.data);//oZOuswqcfgPgcM0PAy6d3at2QD0E openid
+							  var openid=data.data;
+						     if(openid!=""||openid!=null)  oid=openid;
+							
+								$.ajax({  
+								type: "get",
+								url:puburl+"/sys/weChat/isExist", 
+								data:{"wechatopenid":openid,"type":1},
+								success: function(data) {
+									//alert(data.msg);  
+									console.log(data);
+									var result=data.msg;
+									if(result=="人员还未分配企业，暂无法填写"){
+									    // alert(result);
+										 $(".calenew").css("display","block");
+										 $("#pdfContainer").css("display","none");
+										  $(".calenew").html("人员还未分配企业，暂无法查阅");
+										// WeixinJSBridge.call('closeWindow');
+										 //window.close();
+										// console.log("已执行关闭");
+									}else{
+										if(result=="操作成功"){
+											var userid=data.data.userId;
+											comid=data.data.companyId; //公司id
+											console.log(userid);
+											uid=userid;
+											  $.ajax({ //拿地址
+												type:"post",
+												url:"http://************/user/contract/getConvertUrl2", 
+												data:{"companyId":comid},
+												success: function (data) {
+												  var url=data.msg;
+													console.log(url);
+													var m = url.split(",");
+													ctid=m[1];//合同id
+													console.log(ctid);
+													var urlpath=".."+m[0];//文档路径
+													var urlpath="http://bugs.chulture.com/wordpdf/PDF.js/web/viewer.html?file="+m[0];
+													 $('iframe').attr('src',urlpath);
+												},
+												error: function (XMLHttpRequest, textStatus, errorThrown) {
+												}
+											  })
+										}else if(result=="不存在"){
+											console.log("none");
+											//查询不存在，则跳转道注册页面
+											  var url="http://bugs.chulture.com/ques/reg.html";
+											  var path="http://bugs.chulture.com/wordpdf/index.html";
+										window.location.href=url+"?id="+10000*Math.random()+"&userid=";
+										}
+									}
+									 
+								},
+								complete: function () {
+									$("#loadding").hide();
+								},
+								error: function() {
+									alert("网络错误");
+								}
+							});
+						},
+						error: function() {
+							 alert("网络错误");
+						}
+			});
+	} 
+    function getUrlparam(name){ //截取地址后面的code
+		var reg = new RegExp('(^|&)'+name+'=([^&]*)(&|$)');
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null) return unescape(r[2]);
+		return null;			 
+	}
+	function GetRequest() {   //获取站点编码和时间
+				   var url = location.search; 
+				   var theRequest = new Object();  
+				   if (url.indexOf("?") != -1) {  
+					  var str = url.substr(1);  
+					  strs = str.split("&");  
+					  for(var i = 0; i < strs.length; i ++) {  
+						 theRequest[strs[i].split("=")[0]]=unescape(strs[i].split("=")[1]);  
+					  }  
+				   }  
+				   return theRequest;  
+	}
+	function Getchecked(e){//获取复选框的选择状态
+		console.log(e.checked);
+        if(e.checked){
+		   $("#tocanvas").css("background","#8ac9de");
+		   $("#tocanvas").attr('disabled',false);
+		}else{
+		   
+		   $("#tocanvas").css("background","#a9a9a9");
+		   $("#tocanvas").attr('disabled',true);
+		}
+    }
+   function getcanvas(){
+		var url="./canvas.html";
+        window.location.href=url+"?id="+10000*Math.random()+"&userid="+uid+"&ctid="+ctid+"&comid="+comid;
+   }
+   function closediv(data){
+	   if(data==2){
+	      $("#copytext2").css("display","none");
+	   }else if(data==1){
+	      $("#copytext").css("display","none");
+	   }
+   }
+</script>
+</body>
+</html>

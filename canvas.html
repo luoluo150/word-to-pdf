@@ -1,0 +1,173 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta http-equiv="Content-Type" content="Application/msword">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+	<link rel="stylesheet" href="css/index.css"><!-- 
+	<link rel="stylesheet" href="css/pdfh5.css"/> -->
+    <title>签名</title>
+</head>
+<body >
+    	<div id="pdfContainer" class="container" style="background-color:#fff">    
+		<h4 class="sixtitle">协议签署</h4>
+					<ul class="bodyul">
+						<!-- <li  class="bodyli">
+							<div class="tell">联系电话：<input type="text" class="userphone"></div>
+						</li>
+						<li  class="bodyli">
+							<div class="endtime">签署日期：<input type="text" class="getname"></div>
+						</li> -->
+						<li  class="bodyli">
+							<div class="signature_wrapper " id="signature_wrapper"></div>
+						</li>
+					</ul>
+					<div class="allbtn" style="margin-top: 10px; text-align: center;">
+						<button id="btn_clear">清除</button>
+						<button id="downloadPdf" style=" cursor: pointer;">生成合同</button>
+					</div>
+					<h5 style=" margin: 15px 0 15px 22px;color: #d65757;">请将下方内容填写完整并在框内签名后生成合同</h5>
+					<ul class="bodyul" id="allques" ></ul>
+					<ul class="bodyul">
+						<!-- <li  class="bodyli">
+							<div class="tell">联系电话：<input type="text" class="userphone"></div>
+						</li> -->
+						<li  class="bodyli">
+							<div class="endtime">签署日期：<input type="text" class="getname"></div>
+						</li>
+					</ul>
+		<div id="copytext" >
+		  <img class="closebtn" src="image/close.png " width="20" height="20" onclick="closediv(1)"> 
+		   <p id="tishikuai">
+		       <a id="information2" target="_Blank">合同已生成,点击此处跳转</a>
+		   </p>
+		   <span style="  position: absolute; top: 85px; width: 500px; left: -90px; font-size: 15px;">苹果系统请下载Apple Books阅读软件</span>
+		</div>
+		<div id="loadding" style="position: absolute;  display:none;z-index:1800;top:45%;text-align:center;width:100%;left:-5px;">
+		             <img src="image/loadding.gif" width="30" height="30" border="none">
+		             <p>合同生成中...</p>
+		</div>
+	</div>
+
+<script src="js/signature.js"></script> 
+<script src="js/jquery-3.4.1.min.js"></script>
+ <script type="text/javascript">
+    new signatureCanvas({
+         background:'#ffffff',
+    }); 
+	   
+	var puburl="http://*****/";
+	var ctid,uid;
+	var  addlist=[];
+	var comid="",
+
+	window.onload=function(){ 
+		
+	    uid= GetRequest().userid;
+		ctid= GetRequest().ctid;//合同id
+		comid=GetRequest().comid;
+		getname();	   
+	} 
+	function getname(){ //拿字段内容
+	   		 $.ajax({ //拿问题
+					type:"post",
+					url:puburl+"/user/param/getAllParam", 
+					data:{"contractId":ctid},
+					success: function (data) {
+						 console.log(data);
+						 var datas=data.data;
+						 var html="";
+						 var  alist={};
+						// addlist=datas;
+						 for(var i=0;i<datas.length;i++){
+								alist=datas[i];
+								//alist.value="";
+								//alist[datas[i].paramname]="";
+							   addlist.push(alist);
+							 if(datas[i].paramtype=="input"){
+								  html+='<li  class="bodyli" ><div class="tell">'+datas[i].paramdesc+'<input type="text" data-name="'+datas[i].paramname+'" name="'+datas[i].paramname+'"  placeholder="请输入'+datas[i].paramdesc+'"  onblur="getRadioValue(\''+datas[i].paramname+'\',1)" class="userphone" ></div></li>';
+							  }else{
+								    html+='<li  class="bodyli" ><div class="tell">'+datas[i].paramdesc+'<input type="radio" data-name="'+datas[i].paramname+'" name="'+datas[i].paramname+'"  class="userphone" onclick="getRadioValue(\''+datas[i].paramname+'\',2)" value="是" >是<input type="radio" data-name="'+datas[i].paramname+'" name="'+datas[i].paramname+'"  class="userphone" onclick="getRadioValue(\''+datas[i].paramname+'\',2)" value="否">否</div></li>';
+							  }
+						 }
+						   //addlist=addlist[0];
+						    console.log(addlist);
+						  // addlist.userid="";
+						  // addlist.signdate="";
+						  // addlist.sign="";
+						$("#allques").html(html);
+					},
+					error: function () {
+						alert("请检查网络");
+					}
+		})
+	}
+	function CurentTime(){  
+		var now = new Date();        
+		var year = now.getFullYear();       //年     
+		var month = now.getMonth() + 1;     //月        
+		var day = now.getDate();            //日           
+		var clock = year + ".";         
+		if(month < 10)            
+			clock += "0";       
+		clock += month + ".";        
+		if(day < 10)         
+			clock += "0";       
+		clock += day + "";        
+		return clock;    
+	} 
+    $(".getname").val(CurentTime());
+    function GetRequest() {   //获取站点编码和时间
+				   var url = location.search; 
+				   var theRequest = new Object();  
+				   if (url.indexOf("?") != -1) {  
+					  var str = url.substr(1);  
+					  strs = str.split("&");  
+					  for(var i = 0; i < strs.length; i ++) {  
+						 theRequest[strs[i].split("=")[0]]=unescape(strs[i].split("=")[1]);  
+					  }  
+				   }  
+				   return theRequest;  
+	} 
+   function closediv(data){
+	   if(data==2){
+	      $("#copytext2").css("display","none");
+	   }else if(data==1){
+	      $("#copytext").css("display","none");
+	   }else if(data==3){
+	      $("#copytext3").css("visibility","hidden");
+		 // $("#copytext3").css("display","none");
+	   }
+   }
+   function getRadioValue(type,tt) {//只保存
+	 //  alert(tt);
+	var temp = document.getElementsByName(type); //当前所有的类
+	 /*for(var key in addlist){ //循环所有的数据
+			  for( var j=0;j<temp.length;j++){//循环所有的input
+					if (key == temp[j].dataset.name)
+					{  
+						if(tt == 1){
+							 addlist[key]=temp[j].value;
+				       }else if(tt == 2&&temp[j].checked){
+					          addlist[key]=temp[j].value;
+					   } 
+					}
+			  }			
+	}*/
+	for(var i=0;i<addlist.length;i++){
+		 for( var j=0;j<temp.length;j++){
+		    if (addlist[i].paramname == temp[j].dataset.name){
+			     if(tt == 1){
+					 addlist[i].paramvalue=temp[j].value;
+				 }else if(tt == 2&&temp[j].checked){
+					addlist[i].paramvalue=temp[j].value;
+				} 
+			}
+		 }
+	}
+}
+</script>
+</body>
+</html>
